@@ -2,6 +2,19 @@ import zlib
 import sys
 import os
 import random
+import re
+def comment_remover(text):
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('/'):
+            return " " # note: a space and not an empty string
+        else:
+            return s
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE
+    )
+    return re.sub(pattern, replacer, text)
 if "--help" not in sys.argv:
     if len(sys.argv) < 2:
         print("Please provide a file name. For help, please run with --help")
@@ -14,13 +27,10 @@ if "--build" in sys.argv:
         with open(infile,'r') as f:
             ldata = f.read()
         print(f"Infile data length: {len(ldata)}")
-        if len(ldata) > 70:
-
-            print("Compressing...")
-            cdata = zlib.compress(ldata.encode(),9)
-            print(f"Compressed data length: {len(cdata)}")
-        else:
-            cdata = ldata.encode()#Shorter than 70 bytes, no point in compressing
+        ldata = comment_remover(ldata)
+        print(f"Parsed infile length: {len(ldata)}")
+        cdata = zlib.compress(ldata.encode(),9)
+        print(f"Compressed data length: {len(cdata)}")
         print("Writing data...")
         with open(infile.split(".")[-2]+".jcc","wb+") as g:
             g.write(cdata)
@@ -48,10 +58,7 @@ else:
     if os.path.isfile(infile):
         with open(infile,'rb') as f:
             ldata = f.read()
-        if len(ldata) > 70:
-            ffldata = zlib.decompress(ldata,zlib.MAX_WBITS|32)
-        else:
-            ffldata = ldata
+        ffldata = zlib.decompress(ldata,zlib.MAX_WBITS|32)
         try:
             with open(".temp__.c","x") as k:
                 k.write(ffldata.decode())
@@ -68,7 +75,7 @@ else:
             p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.lexe 2> compile.log")
         if p != 0:
             print("Compile error! (see log)")
-            sys.exit()
+            sys.exit(-1)
         else:
             if "--keeplog" not in sys.argv:
                 os.remove("compile.log")#Keeping log in case people want to read it 

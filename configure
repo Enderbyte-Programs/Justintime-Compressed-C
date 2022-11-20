@@ -1,0 +1,16 @@
+uname -a
+#Prompt to print info
+if ! command -v python3 &> /dev/null
+then
+    echo "Error: Python3 could not be found"
+    exit
+fi
+python3 --version
+if ! command -v pyinstaller &> /dev/null
+then
+    echo "Error: pyinstaller could not be found"
+    exit
+fi
+echo "Pyinstaller" $(pyinstaller --version)
+cp Makefile.in Makefile
+echo "Everything is good! Run 'make' to continue."
