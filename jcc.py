@@ -2,9 +2,10 @@ import zlib
 import sys
 import os
 import random
-if len(sys.argv) < 2:
-    print("Please provide a file name.")
-    sys.exit()
+if "--help" not in sys.argv:
+    if len(sys.argv) < 2:
+        print("Please provide a file name. For help, please run with --help")
+        sys.exit()
 infile = sys.argv[1]
 if "--build" in sys.argv:
     #Build to .jcc
@@ -26,11 +27,21 @@ if "--build" in sys.argv:
         print("Done!")
     else:
         print("ERROR File not found.")
-elif "--test" in sys.argv:
-    for i in range(10,1000000,10):
-        tdat = "".join([random.choice(["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]) for j in range(i)])
-        cdata = zlib.compress(tdat.encode(),9)
-        print(f"Length: {i}, csize: {len(cdata)}, Ratio : {i/len(cdata)}")
+elif "--help" in sys.argv:
+    print("""Just In Time Compressed C
+    By Enderbyte Programs
+    
+    usage: jcc <file> [options]
+
+    List of options:
+
+    Build Options / Misc Options:
+        --build: Build file into jcc file
+        --help: Help menu
+    Run Options:
+        -f: Allow overwrite of files
+        --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
+        --keeplog: Keep the compile log file even if the build was successfull""")
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
     #print("opening file")
@@ -45,19 +56,27 @@ else:
             with open(".temp__.c","x") as k:
                 k.write(ffldata.decode())
         except FileExistsError:
-            print("Error. Temp file already exists. Run rm .temp__.c to fix this")
-            sys.exit()
-        if "--gcc" in sys.argv:
-            p = os.system(f"tcc .temp__.c -lm -O -o .temp{ridcode}.lexe")
+            if "-f" in sys.argv:#Force it
+                with open(".temp__.c","w+") as k:
+                    k.write(ffldata.decode())
+            else:
+                print("Error. Temp file already exists. Run rm .temp__.c to fix this")
+                sys.exit()
+        if "--tcc" not in sys.argv:
+            p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.lexe 2> compile.log")
         else:
-            p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.lexe")
+            p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.lexe 2> compile.log")
         if p != 0:
             print("Compile error! (see log)")
             sys.exit()
+        else:
+            if "--keeplog" not in sys.argv:
+                os.remove("compile.log")#Keeping log in case people want to read it 
         os.remove(".temp__.c")
         i = os.system(f"./.temp{ridcode}.lexe")
         if i != 0:
             print(f"Program exited with code {i}. This is usually an error")
         os.remove(f"./.temp{ridcode}.lexe")
+        
     else:
         print("ERROR File not found.")
