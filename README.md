@@ -11,14 +11,18 @@ make (builds program and places executable in directory)
 make install (Installs JCC to /usr/bin)
 make clean (optional, cleans up temporary files left from build)
 
+
     usage: jcc <file> [options]
 
     List of options:
-
-    Build Options / Misc Options:
-        --build: Build file into jcc file
+    Misc Options:
         --help: Help menu
+        --version: Print version       
+    Build Options:
+        --build: Build file into jcc file
+        --nodep: Do not include dependencies in output jcc file
     Run Options:
         -f: Allow overwrite of files
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
         --keeplog: Keep the compile log file even if the build was successfull
+        -v (--verbose): Print verbose output during extraction
