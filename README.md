@@ -5,7 +5,11 @@ by Enderbyte09, inspiration by awesomegamer
 
 This program is a way to make the *smallest* executables possible by compiling to bytecode first then comiling them just in time. 
 How to install:
-Download either using the button or git clone. cd in to the directory and run "make" followed by "make install". This package requires python3 and pyinstaller
+Download either using the button or git clone. cd in to the directory. A total of 15 MB is required for installation Like most programs, JCC can be built and installed with three commands:
+./configure (makes sure you have all the packages required for building)
+make (builds program and places executable in directory)
+make install (Installs JCC to /usr/bin)
+make clean (optional, cleans up temporary files left from build)
 
     usage: jcc <file> [options]
 
