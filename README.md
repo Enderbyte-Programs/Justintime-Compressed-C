@@ -32,3 +32,10 @@ NOTE: jcc files from before version 3 will not work in version 3 and above. Plea
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
         --keeplog: Keep the compile log file even if the build was successfull
         -v (--verbose): Print verbose output during extraction
+
+
+Credits:
+Python program by Enderbyte09
+prime.c, prime.jcc, mathtrek.jcc by Enderbyte09
+sort.c and sort.jcc by awesomegamer
+snake.jcc by trogobit
