@@ -112,7 +112,7 @@ elif "--help" in sys.argv:
         """)
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
-    if ext != ".jcc" and "--allowbadext" not in sys.argv:
+    if ext != "jcc" and "--allowbadext" not in sys.argv:
         print("I can only run files with a jcc extension. If you are sure that this is a jcc file, run jcc with --allowbadext")
         if ext == "c":
             print("To build a C program in to a jcc file, run jcc <file> --build")
