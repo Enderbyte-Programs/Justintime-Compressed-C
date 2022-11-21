@@ -20,7 +20,7 @@ def compressfile(filename: str,verbose=False) -> bytes:
         data = f.read()
     if verbose:
         print(f"{filename} insize {len(data)} bytes")
-    result = zlib.compress(data.encode(),9)
+    result = zlib.compress(comment_remover(data).encode(),9)
     if verbose:
         print(f"{filename} csize {len(result)} bytes")
     return result
@@ -75,7 +75,7 @@ if "--build" in sys.argv:
     else:
         print("ERROR File not found.")
 elif "--version" in sys.argv:
-    print("JCC 3 [BETA]")
+    print("JCC 4 [BETA]")
 elif "--help" in sys.argv:
     print("""Just In Time Compressed C
     By Enderbyte Programs
