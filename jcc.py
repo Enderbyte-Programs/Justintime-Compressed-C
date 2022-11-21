@@ -3,6 +3,11 @@ import sys
 import os
 import random
 import re
+from platform import system as getos
+if getos() == "Windows":
+    NT = True
+else:
+    NT = False
 def comment_remover(text):
     def replacer(match):
         s = match.group(0)
@@ -32,20 +37,26 @@ def vbprint(data: str) -> None:
     if VERBOSE:
         print(data)
 infile = sys.argv[1]
+ext = infile.split(".")[-1]
 if "-v" in sys.argv or "--verbose" in sys.argv:
     VERBOSE = True
 else:
     VERBOSE = False
 if "--build" in sys.argv:
     #Build to .jcc
-    print("opening file")
+    if ext != "c" and "--allowbadext" not in sys.argv:
+        print("Invalid input file. Please use .c files only for building or run with argument --allowbadext")
+        if ext == "jcc":
+            print("This file is already built. To run, execute jcc <file>")
+        sys.exit()
+    vbprint("opening file")
     if os.path.isfile(infile):
         with open(infile,'r') as f:
             ldata = f.read()
-        print(f"Infile data length: {len(ldata)}")
+        vbprint(f"Infile data length: {len(ldata)}")
         ldata = comment_remover(ldata)
-        print(f"Parsed infile length: {len(ldata)}")
-        print("Finding dependencies...")
+        vbprint(f"Parsed infile length: {len(ldata)}")
+        vbprint("Finding dependencies...")
         linc = 0
         writedata = b""
         if "--nodep" not in sys.argv:
@@ -55,7 +66,7 @@ if "--build" in sys.argv:
                     lcdep = effline.split(" ")[1].strip()
                     if lcdep[0] == "\"":
                         lcdep = lcdep.replace("\"","")
-                        print(f"Found dependency {lcdep}")
+                        vbprint(f"Found dependency {lcdep}")
                         writedata += lcdep.encode() + b"$SDEP$"
                         if not os.path.isfile(lcdep):
                             print(f"ERROR! Dependency file {lcdep} could not be found. Make sure it is in the same directory as cwd!")
@@ -63,19 +74,19 @@ if "--build" in sys.argv:
                 linc += 1
 
         cdata = zlib.compress(ldata.encode(),9)
-        print(f"Compressed data length: {len(cdata)}")
+        vbprint(f"Compressed data length: {len(cdata)}")
         writedata += b"$DATA$"
         writedata += cdata
-        print(f"Total length: {len(writedata)} bytes")
-        print("Writing data...")
+        vbprint(f"Total length: {len(writedata)} bytes")
+        vbprint("Writing data...")
         
         with open(infile.split(".")[-2]+".jcc","wb+") as g:
             g.write(writedata)
-        print("Done!")
+        vbprint("Done!")
     else:
         print("ERROR File not found.")
 elif "--version" in sys.argv:
-    print("JCC 4 [BETA]")
+    print("JCC 5 [BETA]")
 elif "--help" in sys.argv:
     print("""Just In Time Compressed C
     By Enderbyte Programs
@@ -85,17 +96,27 @@ elif "--help" in sys.argv:
     List of options:
     Misc Options:
         --help: Help menu
-        --version: Print version       
+        --version: Print version     
     Build Options:
         --build: Build file into jcc file
         --nodep: Do not include dependencies in output jcc file
+        -v (--verbose): Print verbose output
+        --allowbadext: Do operation even if the input file has a disallowed extension
     Run Options:
         -f: Allow overwrite of files
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
         --keeplog: Keep the compile log file even if the build was successfull
-        -v (--verbose): Print verbose output during extraction""")
+        --decompile: Extract files but do not run executable
+        -v (--verbose): Print verbose output
+        --allowbadext: Do operation even if the input file has a disallowed extension
+        """)
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
+    if ext != ".jcc" and "--allowbadext" not in sys.argv:
+        print("I can only run files with a jcc extension. If you are sure that this is a jcc file, run jcc with --allowbadext")
+        if ext == "c":
+            print("To build a C program in to a jcc file, run jcc <file> --build")
+        sys.exit()
     vbprint("Opening file")
     if os.path.isfile(infile):
         with open(infile,'rb') as f:
@@ -139,26 +160,31 @@ else:
                     f.write(zlib.decompress(depstuff).decode())
             vbprint("Finished unpacking!")
         #input()
-        vbprint("Building...")
-        if "--tcc" not in sys.argv:
-            p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.lexe 2> compile.log")
+        if "--decompile" not in sys.argv:
+            vbprint("Building...")
+            if "--tcc" not in sys.argv:
+                p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe 2> compile.log")
+            else:
+                p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe 2> compile.log")
+            if p != 0:
+                print("Compile error! (see log)")
+                sys.exit(-1)
+            for ldep in deps:
+                os.remove(ldep)
+            for lk in lfixes.keys():
+                os.rename(lfixes[lk],lk)#Reverting file system
+            else:
+                if "--keeplog" not in sys.argv:
+                    os.remove("compile.log")#Keeping log in case people want to read it 
+            os.remove(".temp__.c")
+            if not NT:
+                i = os.system(f"./.temp{ridcode}.exe")
+            else:
+                i = os.system(f".temp{ridcode}.exe")
+            if i != 0:
+                print(f"Program exited with code {i}. This is usually an error")
+            os.remove(f".temp{ridcode}.exe")
         else:
-            p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.lexe 2> compile.log")
-        if p != 0:
-            print("Compile error! (see log)")
-            sys.exit(-1)
-        for ldep in deps:
-            os.remove(ldep)
-        for lk in lfixes.keys():
-            os.rename(lfixes[lk],lk)#Reverting file system
-        else:
-            if "--keeplog" not in sys.argv:
-                os.remove("compile.log")#Keeping log in case people want to read it 
-        os.remove(".temp__.c")
-        i = os.system(f"./.temp{ridcode}.lexe")
-        if i != 0:
-            print(f"Program exited with code {i}. This is usually an error")
-        os.remove(f"./.temp{ridcode}.lexe")
-        
+            print("Find decompiled main file at .temp__.c")
     else:
         print("ERROR File not found.")
