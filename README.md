@@ -15,6 +15,9 @@ make install (Installs JCC to /usr/bin)
 
 make clean (optional, cleans up temporary files left from build)
 
+=ON WINDOWS=
+Either download the provided jcc.exe or download entire repository and run build.ps1 (requires execution policy change)
+
 NOTE: jcc files from before version 3 will not work in version 3 and above. Please recompile to fit this new format
 
 
@@ -23,15 +26,19 @@ NOTE: jcc files from before version 3 will not work in version 3 and above. Plea
     List of options:
     Misc Options:
         --help: Help menu
-        --version: Print version       
+        --version: Print version     
     Build Options:
         --build: Build file into jcc file
         --nodep: Do not include dependencies in output jcc file
+        -v (--verbose): Print verbose output
+        --allowbadext: Do operation even if the input file has a disallowed extension
     Run Options:
         -f: Allow overwrite of files
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
         --keeplog: Keep the compile log file even if the build was successfull
-        -v (--verbose): Print verbose output during extraction
+        --decompile: Extract files but do not run executable
+        -v (--verbose): Print verbose output
+        --allowbadext: Do operation even if the input file has a disallowed extension
 
 
 Credits:
