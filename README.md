@@ -51,55 +51,56 @@ prime.c, prime.jcc, mathtrek.jcc by Enderbyte09
 sort.c and sort.jcc by awesomegamer
 snake.jcc by trogobit
 
-##Changelog##
-JCC 6 [2022-11-21]
-Type: Feature add
-Contributors: Enderbyte09
-    -Added preliminary testing
-        -Tests code when --build ing
-        -Defaults gcc output to stdout
-        -Unless --nocompileout is specified, in which case it will not generate any
-        -Disable this testing with the --notest arg
-    -Improved compression algorith
-        -Now removes empty spaces from lines, *improving efficiency*
-        -Applies to both normal files and header files
-
-JCC 5.1 [2022-11-21]
-Type: Bugfix
-Contributors: Enderbyte09
-    -Fixed bug where you coulc not run any jcc files
+## Changelog
     
-JCC 5 [2022-11-21]
-Type: Feature add
-Contributors: Enderbyte09
-    -Added hi.c testing file
-    -Added windows support
-        -Changed end extension to .exe as it makes no difference on Linux
-        -Added build.sh1, equivilant of Makefile
-        -REQUIRES MINGW INSTALLATION AND ADD2PATH, WHICH IS NOT PROVIDED WITH THIS SOFTWARE
-    -Warning will now be displayed on files that don't have the right extension
-        -Bypass this with --allowbadext
-    -Added --decompile
-        Decompiles JCC placing headers in the same directory and target C file as .temp__.c
-
-JCC 4 [2022-11-20]
-Type: Bugfix
-Contributors: Enderbyte09
-    -Improved compression algorithm by removing comments on header files
+    JCC 6 [2022-11-21]
+    Type: Feature add
+    Contributors: Enderbyte09
+        -Added preliminary testing
+            -Tests code when --build ing
+            -Defaults gcc output to stdout
+            -Unless --nocompileout is specified, in which case it will not generate any
+            -Disable this testing with the --notest arg
+        -Improved compression algorith
+            -Now removes empty spaces from lines, *improving efficiency*
+            -Applies to both normal files and header files
     
-JCC 3 [2022-11-20]
-Type: Feature add
-Contributors: Enderbyte09, troglobit, awesomegamer
-    -Added support for bundling dependency headers
-        -MUST BE IN CURRENT WORKING DIRECTORY
-    -Added --nodep arg
-        -Does NOT bundle dependency
-    -Changed executable format, old programs will NOT WORK
-
-JCC 2 [2022-11-20]
-Type: Feature add
-Contributors: Enderbyte09
-    -Improved compression by removing comments from files
+    JCC 5.1 [2022-11-21]
+    Type: Bugfix
+    Contributors: Enderbyte09
+        -Fixed bug where you coulc not run any jcc files
+        
+    JCC 5 [2022-11-21]
+    Type: Feature add
+    Contributors: Enderbyte09
+        -Added hi.c testing file
+        -Added windows support
+            -Changed end extension to .exe as it makes no difference on Linux
+            -Added build.sh1, equivilant of Makefile
+            -REQUIRES MINGW INSTALLATION AND ADD2PATH, WHICH IS NOT PROVIDED WITH THIS SOFTWARE
+        -Warning will now be displayed on files that don't have the right extension
+            -Bypass this with --allowbadext
+        -Added --decompile
+            Decompiles JCC placing headers in the same directory and target C file as .temp__.c
     
-JCC 1 [2022-11-19]
-NO INFO
+    JCC 4 [2022-11-20]
+    Type: Bugfix
+    Contributors: Enderbyte09
+        -Improved compression algorithm by removing comments on header files
+        
+    JCC 3 [2022-11-20]
+    Type: Feature add
+    Contributors: Enderbyte09, troglobit, awesomegamer
+        -Added support for bundling dependency headers
+            -MUST BE IN CURRENT WORKING DIRECTORY
+        -Added --nodep arg
+            -Does NOT bundle dependency
+        -Changed executable format, old programs will NOT WORK
+    
+    JCC 2 [2022-11-20]
+    Type: Feature add
+    Contributors: Enderbyte09
+        -Improved compression by removing comments from files
+        
+    JCC 1 [2022-11-19]
+    NO INFO
