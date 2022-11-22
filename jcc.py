@@ -25,6 +25,7 @@ def compressfile(filename: str,verbose=False) -> bytes:
         data = f.read()
     if verbose:
         print(f"{filename} insize {len(data)} bytes")
+    data = "\n".join([d for d in data.split("\n") if d.replace(" ","") != ""])#Removing empty lines [MORE EFFICENT :):):)]
     result = zlib.compress(comment_remover(data).encode(),9)
     if verbose:
         print(f"{filename} csize {len(result)} bytes")
@@ -49,6 +50,16 @@ if "--build" in sys.argv:
         if ext == "jcc":
             print("This file is already built. To run, execute jcc <file>")
         sys.exit()
+    if "--notest" not in sys.argv:
+        vbprint("Testing compilation...")
+        if "--nocompileout" in sys.argv:
+            prelimo = os.system(f"gcc {infile} -fsyntax-only 2> /dev/null")
+        else:
+            prelimo = os.system(f"gcc {infile} -fsyntax-only")
+        if prelimo != 0:
+            print("Test compile error! If you are sure you want to build to JCC run with --notest arg")
+        else:
+            vbprint("Program test-built without errors.")
     vbprint("opening file")
     if os.path.isfile(infile):
         with open(infile,'r') as f:
@@ -72,7 +83,9 @@ if "--build" in sys.argv:
                             print(f"ERROR! Dependency file {lcdep} could not be found. Make sure it is in the same directory as cwd!")
                         writedata += compressfile(lcdep,True) + b"$EDEP$"
                 linc += 1
-
+        #print(ldata)
+        ldata = "\n".join([d for d in ldata.split("\n") if d.replace(" ","") != ""])#Removing empty lines [MORE EFFICENT  saves 2 bytes:):):)]
+        #print(ldata)
         cdata = zlib.compress(ldata.encode(),9)
         vbprint(f"Compressed data length: {len(cdata)}")
         writedata += b"$DATA$"
@@ -86,7 +99,7 @@ if "--build" in sys.argv:
     else:
         print("ERROR File not found.")
 elif "--version" in sys.argv:
-    print("JCC 5 [BETA]")
+    print("JCC 6 [BETA]")
 elif "--help" in sys.argv:
     print("""Just In Time Compressed C
     By Enderbyte Programs
@@ -102,6 +115,8 @@ elif "--help" in sys.argv:
         --nodep: Do not include dependencies in output jcc file
         -v (--verbose): Print verbose output
         --allowbadext: Do operation even if the input file has a disallowed extension
+        --notest: Do not run compile test when building JCC
+        --nocompileout: Do not display compiler output during test
     Run Options:
         -f: Allow overwrite of files
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
@@ -109,6 +124,7 @@ elif "--help" in sys.argv:
         --decompile: Extract files but do not run executable
         -v (--verbose): Print verbose output
         --allowbadext: Do operation even if the input file has a disallowed extension
+        --showout: Show compiler output during build
         """)
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
@@ -117,6 +133,7 @@ else:
         if ext == "c":
             print("To build a C program in to a jcc file, run jcc <file> --build")
         sys.exit()
+    
     vbprint("Opening file")
     if os.path.isfile(infile):
         with open(infile,'rb') as f:
@@ -162,13 +179,22 @@ else:
         #input()
         if "--decompile" not in sys.argv:
             vbprint("Building...")
-            if "--tcc" not in sys.argv:
-                p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe 2> compile.log")
+            if "--showout" not in sys.argv:
+                if "--tcc" not in sys.argv:
+                    p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe 2> compile.log")
+                else:
+                    p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe 2> compile.log")
+                if p != 0:
+                    print("Compile error! (see log)")
+                    sys.exit(-1)
             else:
-                p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe 2> compile.log")
-            if p != 0:
-                print("Compile error! (see log)")
-                sys.exit(-1)
+                if "--tcc" not in sys.argv:
+                    p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe")
+                else:
+                    p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe")
+                if p != 0:
+                    print("Compile error!")
+                    sys.exit(-1)
             for ldep in deps:
                 os.remove(ldep)
             for lk in lfixes.keys():
