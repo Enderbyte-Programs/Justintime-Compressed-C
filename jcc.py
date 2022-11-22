@@ -4,10 +4,40 @@ import os
 import random
 import re
 from platform import system as getos
+import hashlib
+from functools import partial
+import json
+from shutil import copyfile
+
+def md5sum(filename: str):
+    with open(filename, mode='rb') as f:
+        d = hashlib.md5()
+        for buf in iter(partial(f.read, 128), b''):
+            d.update(buf)
+    return d.hexdigest()
 if getos() == "Windows":
     NT = True
+    CACHEDIR = os.getenv("USERPROFILE") + "\\.jcccache"
+    CACHEFILE = CACHEDIR + "\\cache.json"
 else:
     NT = False
+    CACHEDIR = os.path.expanduser("~/.jcccache")
+    CACHEFILE = CACHEDIR + "/cache.json"
+#load init
+if not os.path.isdir(CACHEDIR):
+    os.mkdir(CACHEDIR)
+if not os.path.isfile(CACHEFILE):
+    with open(CACHEFILE,"w+") as f:
+        f.write("{}")#Empty json
+    CACHE = {}
+else:
+    with open(CACHEFILE) as f:
+        try:
+            CACHE = json.load(f)
+        except json.decoder.JSONDecodeError:
+            print("ERROR: CACHE IS CORRUPT. Deleting.")
+            f.write("{}")
+            CACHE = {}
 def comment_remover(text):
     def replacer(match):
         s = match.group(0)
@@ -34,6 +64,9 @@ if "--help" not in sys.argv and "--version" not in sys.argv:
     if len(sys.argv) < 2:
         print("Please provide a file name. For help, please run with --help")
         sys.exit()
+def updatecache():
+    with open(CACHEFILE,"w+") as f:
+        f.write(json.dumps(CACHE))
 def vbprint(data: str) -> None:
     if VERBOSE:
         print(data)
@@ -125,6 +158,7 @@ elif "--help" in sys.argv:
         -v (--verbose): Print verbose output
         --allowbadext: Do operation even if the input file has a disallowed extension
         --showout: Show compiler output during build
+        --nocache: Do not add this file to cache
         """)
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
@@ -133,76 +167,95 @@ else:
         if ext == "c":
             print("To build a C program in to a jcc file, run jcc <file> --build")
         sys.exit()
+    vbprint("Checksumming")
     
     vbprint("Opening file")
     if os.path.isfile(infile):
-        with open(infile,'rb') as f:
-            ldata = f.read()
-        HEAD = ldata.split(b"$DATA$")[0]
-        ldata = ldata.split(b"$DATA$")[1]
-        vbprint(f"Data length: {len(ldata)} bytes | Header length: {len(HEAD)} bytes")
+        cchecksum = md5sum(infile)
+        if cchecksum not in CACHE.keys():
+            with open(infile,'rb') as f:
+                ldata = f.read()
+            HEAD = ldata.split(b"$DATA$")[0]
+            ldata = ldata.split(b"$DATA$")[1]
+            vbprint(f"Data length: {len(ldata)} bytes | Header length: {len(HEAD)} bytes")
 
-        vbprint("Decompressing data")
-        ffldata = zlib.decompress(ldata,zlib.MAX_WBITS|32)
-        vbprint("Writing temp file")
-        try:
-            with open(".temp__.c","x") as k:
-                k.write(ffldata.decode())
-        except FileExistsError:
-            if "-f" in sys.argv:#Force it
-                with open(".temp__.c","w+") as k:
+            vbprint("Decompressing data")
+            ffldata = zlib.decompress(ldata,zlib.MAX_WBITS|32)
+            vbprint("Writing temp file")
+            try:
+                with open(".temp__.c","x") as k:
                     k.write(ffldata.decode())
-            else:
-                print("Error. Temp file already exists. Run rm .temp__.c to fix this")
-                sys.exit()
+            except FileExistsError:
+                if "-f" in sys.argv:#Force it
+                    with open(".temp__.c","w+") as k:
+                        k.write(ffldata.decode())
+                else:
+                    print("Error. Temp file already exists. Run rm .temp__.c to fix this")
+                    sys.exit()
 
-        #Header stuff here
-        vbprint("Writing dependancies")
-        lfixes = {}
-        deps = []
-        if len(HEAD) > 10:
-            depdat = HEAD.split(b"$EDEP$")
-            depdat = [d for d in depdat if d != b'']#Removing empty strings
-            for dependancy in depdat:
-                depname = dependancy.split(b"$SDEP$")[0]
-                depstuff = dependancy.split(b"$SDEP$")[1]
-                vbprint(f"Writing dependancy {depname}")
-                deps.append(depname)
-                if os.path.isfile(depname):
-                    vbprint("Dependancy path already exists. Renaming")
-                    lfixes[depname] = depname + b" (copy)"
-                    os.rename(depname,depname+b" (copy)")
-                with open(depname,"w+") as f:
-                    vbprint(f"Decompressing {depname}")
-                    f.write(zlib.decompress(depstuff).decode())
-            vbprint("Finished unpacking!")
-        #input()
-        if "--decompile" not in sys.argv:
-            vbprint("Building...")
-            if "--showout" not in sys.argv:
-                if "--tcc" not in sys.argv:
-                    p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe 2> compile.log")
+            #Header stuff here
+            vbprint("Writing dependancies")
+            lfixes = {}
+            deps = []
+            if len(HEAD) > 10:
+                depdat = HEAD.split(b"$EDEP$")
+                depdat = [d for d in depdat if d != b'']#Removing empty strings
+                for dependancy in depdat:
+                    depname = dependancy.split(b"$SDEP$")[0]
+                    depstuff = dependancy.split(b"$SDEP$")[1]
+                    vbprint(f"Writing dependancy {depname}")
+                    deps.append(depname)
+                    if os.path.isfile(depname):
+                        vbprint("Dependancy path already exists. Renaming")
+                        lfixes[depname] = depname + b" (copy)"
+                        os.rename(depname,depname+b" (copy)")
+                    with open(depname,"w+") as f:
+                        vbprint(f"Decompressing {depname}")
+                        f.write(zlib.decompress(depstuff).decode())
+                vbprint("Finished unpacking!")
+            #input()
+            if "--decompile" not in sys.argv:
+                vbprint("Building...")
+                if "--showout" not in sys.argv:
+                    if "--tcc" not in sys.argv:
+                        p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe 2> compile.log")
+                    else:
+                        p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe 2> compile.log")
+                    if p != 0:
+                        print("Compile error! (see log)")
+                        sys.exit(-1)
                 else:
-                    p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe 2> compile.log")
-                if p != 0:
-                    print("Compile error! (see log)")
-                    sys.exit(-1)
-            else:
-                if "--tcc" not in sys.argv:
-                    p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe")
+                    if "--tcc" not in sys.argv:
+                        p = os.system(f"gcc .temp__.c -lm -O -o .temp{ridcode}.exe")
+                    else:
+                        p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe")
+                    if p != 0:
+                        print("Compile error!")
+                        sys.exit(-1)
+                for ldep in deps:
+                    os.remove(ldep)
+                for lk in lfixes.keys():
+                    os.rename(lfixes[lk],lk)#Reverting file system
                 else:
-                    p = os.system(f"tcc .temp__.c -lm -o .temp{ridcode}.exe")
-                if p != 0:
-                    print("Compile error!")
-                    sys.exit(-1)
-            for ldep in deps:
-                os.remove(ldep)
-            for lk in lfixes.keys():
-                os.rename(lfixes[lk],lk)#Reverting file system
+                    if "--keeplog" not in sys.argv:
+                        os.remove("compile.log")#Keeping log in case people want to read it 
+                os.remove(".temp__.c")
+                copyfile(f".temp{ridcode}.exe",CACHEDIR+f"/{cchecksum}.exe")
+                CACHE[cchecksum] = CACHEDIR+f"/{cchecksum}.exe"
+                updatecache()
+                if not NT:
+                    i = os.system(f"./.temp{ridcode}.exe")
+                else:
+                    i = os.system(f".temp{ridcode}.exe")
+                if i != 0:
+                    print(f"Program exited with code {i}. This is usually an error")
+                os.remove(f".temp{ridcode}.exe")
             else:
-                if "--keeplog" not in sys.argv:
-                    os.remove("compile.log")#Keeping log in case people want to read it 
-            os.remove(".temp__.c")
+                print("Find decompiled main file at .temp__.c")
+        else:
+            #Found in cache
+            vbprint("Program is already in cache")
+            copyfile(CACHEDIR+f"/{cchecksum}.exe",f".temp{ridcode}.exe")
             if not NT:
                 i = os.system(f"./.temp{ridcode}.exe")
             else:
@@ -210,7 +263,6 @@ else:
             if i != 0:
                 print(f"Program exited with code {i}. This is usually an error")
             os.remove(f".temp{ridcode}.exe")
-        else:
-            print("Find decompiled main file at .temp__.c")
+
     else:
         print("ERROR File not found.")
