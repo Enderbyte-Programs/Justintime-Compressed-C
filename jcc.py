@@ -266,15 +266,18 @@ elif "--cstat" in sys.argv:
     print(f"Cache directory: {CACHEDIR}")
     flnames = []
     flsize = []
+    tsize = 0
     for fl in os.listdir(CACHEDIR):
+        fl = CACHEDIR + "/" + fl
         if os.path.isdir(fl):
             continue
         else:
             flnames.append(fl)
             flsize.append(os.path.getsize(fl))
+            tsize += os.path.getsize(fl)
     print(f"Max size: {max(flsize)} ({flnames[flsize.index(max(flsize))]})")
     print(f"Min size: {min(flsize)} ({flnames[flsize.index(min(flsize))]})")
-    print(f"Total size: ")
+    print(f"Total size: {round(tsize/1000,1)} KB")
 else:
     ridcode = random.randint(1,9999)#Prevent conflict
     if ext != "jcc" and "--allowbadext" not in sys.argv:
