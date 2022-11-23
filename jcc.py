@@ -9,6 +9,11 @@ from functools import partial
 import json
 from shutil import copyfile,rmtree
 
+#First byte
+#1: Linux only
+#2: Windows only
+#Anything else: All Oses
+
 def md5sum(filename: str):
     with open(filename, mode='rb') as f:
         d = hashlib.md5()
@@ -80,8 +85,13 @@ else:
 def buildandexec(infile):
     with open(infile,'rb') as f:
         ldata = f.read()
-    HEAD = ldata.split(b"$DATA$")[0]
-    ldata = ldata.split(b"$DATA$")[1]
+        bhead = ldata[0]
+        vbprint(bhead)
+    if ((NT and bhead == 1) or (not NT and bhead == 2)) and "--ignoreos" not in sys.argv:
+        print("ERROR: This program is not compatible with your OS. If you are sure you want to run this, run with argument --ignoreos")
+        sys.exit(-1)
+    HEAD = ldata.split(b"$DAT")[0]
+    ldata = ldata.split(b"$DAT")[1]
     vbprint(f"Data length: {len(ldata)} bytes | Header length: {len(HEAD)} bytes")
 
     vbprint("Decompressing data")
@@ -103,11 +113,11 @@ def buildandexec(infile):
     lfixes = {}
     deps = []
     if len(HEAD) > 10:
-        depdat = HEAD.split(b"$EDEP$")
+        depdat = HEAD.split(b"$EDE")
         depdat = [d for d in depdat if d != b'']#Removing empty strings
         for dependancy in depdat:
-            depname = dependancy.split(b"$SDEP$")[0]
-            depstuff = dependancy.split(b"$SDEP$")[1]
+            depname = dependancy.split(b"$SDE")[0]
+            depstuff = dependancy.split(b"$SDE")[1]
             vbprint(f"Writing dependancy {depname}")
             deps.append(depname)
             if os.path.isfile(depname):
@@ -186,6 +196,12 @@ if "--build" in sys.argv:
         vbprint("Finding dependencies...")
         linc = 0
         writedata = b""
+        if "--nowin32" in sys.argv:
+            writedata += b"\x01"
+        elif "--nolinux" in sys.argv:
+            writedata += b"\x02"
+        else:
+            writedata += b"\x00"
         if "--nodep" not in sys.argv:
             for line in ldata.splitlines():
                 if line[0:3] == "#in":
@@ -194,17 +210,17 @@ if "--build" in sys.argv:
                     if lcdep[0] == "\"":
                         lcdep = lcdep.replace("\"","")
                         vbprint(f"Found dependency {lcdep}")
-                        writedata += lcdep.encode() + b"$SDEP$"
+                        writedata += lcdep.encode() + b"$SDE"
                         if not os.path.isfile(lcdep):
                             print(f"ERROR! Dependency file {lcdep} could not be found. Make sure it is in the same directory as cwd!")
-                        writedata += compressfile(lcdep,True) + b"$EDEP$"
+                        writedata += compressfile(lcdep,True) + b"$EDE"
                 linc += 1
         #print(ldata)
         ldata = "\n".join([d for d in ldata.split("\n") if d.replace(" ","") != ""])#Removing empty lines [MORE EFFICENT  saves 2 bytes:):):)]
         #print(ldata)
         cdata = zlib.compress(ldata.encode(),9)
         vbprint(f"Compressed data length: {len(cdata)}")
-        writedata += b"$DATA$"
+        writedata += b"$DAT"
         writedata += cdata
         vbprint(f"Total length: {len(writedata)} bytes")
         vbprint("Writing data...")
@@ -215,7 +231,7 @@ if "--build" in sys.argv:
     else:
         print("ERROR File not found.")
 elif "--version" in sys.argv:
-    print("JCC 7 [BETA]")
+    print("JCC 8 [BETA]")
 elif "--help" in sys.argv:
     print("""Just In Time Compressed C
     By Enderbyte Programs
@@ -236,6 +252,8 @@ elif "--help" in sys.argv:
         --allowbadext: Do operation even if the input file has a disallowed extension
         --notest: Do not run compile test when building JCC
         --nocompileout: Do not display compiler output during test
+        --nowin32: Set program to not run on Windows
+        --nolinux: Set program to not run on Linux
     Run Options:
         -f: Allow overwrite of files
         --tcc: Use the TCC (Tiny C Compiler) instead of default gcc
@@ -247,6 +265,7 @@ elif "--help" in sys.argv:
         --nocache: Do not add this file to cache
         --rebuild: Do not check cache and force rebuild
         --checkcache: Check if program is in cache but do not run
+        --ignoreos: Ignore developer's OS specifications when running
         """)
 elif "--validatecache" in sys.argv:
     for cacheitem in list(CACHE.keys()):
