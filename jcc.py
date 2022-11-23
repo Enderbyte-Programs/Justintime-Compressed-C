@@ -309,7 +309,9 @@ else:
                 del CACHE[cchecksum]
                 updatecache()
                 sys.exit()
+            
             if not NT:
+                os.system(f"chmod +x ./.temp{ridcode}.exe")#Fixing permission
                 i = os.system(f"./.temp{ridcode}.exe")
             else:
                 i = os.system(f".temp{ridcode}.exe")
