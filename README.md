@@ -27,7 +27,10 @@ NOTE: jcc files from before version 3 will not work in version 3 and above. Plea
     List of options:
     Misc Options:
         --help: Help menu
-        --version: Print version     
+        --version: Print version  
+        --validatecache: Validates cache
+        --clearcache: Clears cache
+        --cstat: Get statistics about the cache   
     Build Options:
         --build: Build file into jcc file
         --nodep: Do not include dependencies in output jcc file
@@ -43,6 +46,10 @@ NOTE: jcc files from before version 3 will not work in version 3 and above. Plea
         -v (--verbose): Print verbose output
         --allowbadext: Do operation even if the input file has a disallowed extension
         --showout: Show compiler output during build
+        --nocache: Do not add this file to cache
+        --rebuild: Do not check cache and force rebuild
+        --checkcache: Check if program is in cache but do not run
+
 
 
 Credits:
@@ -52,6 +59,13 @@ sort.c and sort.jcc by awesomegamer
 snake.jcc by trogobit
 
 ## Changelog
+    JCC 7 [2022-11-22]
+    Type: Feature add
+    Contributors: Enderbyte09
+        -Added Cache
+            -Works on Windows and Linux
+            -Set to [USER FOLDER]/.jcccache
+            -Contains executables that is copied
     
     JCC 6 [2022-11-21]
     Type: Feature add
