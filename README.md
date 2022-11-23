@@ -7,6 +7,8 @@ This program is a way to make the *smallest* executables possible by compiling t
 How to install:
 Download either using the button or git clone. cd in to the directory. A total of 15 MB is required for installation Like most programs, JCC can be built and installed with three commands:
 
+## On Linux
+
 ./configure (makes sure you have all the packages required for building)
 
 make (builds program and places executable in directory)
@@ -15,7 +17,11 @@ make install (Installs JCC to /usr/bin)
 
 make clean (optional, cleans up temporary files left from build)
 
-##ON WINDOWS##
+## On Linux (user friendly option)
+
+Starting with version 7, Linux editions will have a file named 'setup'. This is a shell script that will automatically setup, download, build, and install JCC. Note: If you don't like packages being installed without your permission, DO NOT choose this option. Simply install it with `sudo ./setup` or `sudo bash setup`
+
+## On Windows
 
 Either download the provided jcc.exe or download entire repository and run build.ps1 (requires execution policy change)
 
