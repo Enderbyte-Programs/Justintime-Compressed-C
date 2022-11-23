@@ -86,6 +86,7 @@ def buildandexec(infile):
     with open(infile,'rb') as f:
         ldata = f.read()
         bhead = ldata[0]
+        ldata = ldata[1:]
         vbprint(bhead)
     if ((NT and bhead == 1) or (not NT and bhead == 2)) and "--ignoreos" not in sys.argv:
         print("ERROR: This program is not compatible with your OS. If you are sure you want to run this, run with argument --ignoreos")
