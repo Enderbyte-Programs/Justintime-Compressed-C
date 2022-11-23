@@ -26,6 +26,7 @@ Starting with version 7, Linux editions will have a file named 'setup'. This is 
 Either download the provided jcc.exe or download entire repository and run build.ps1 (requires execution policy change)
 
 NOTE: jcc files from before version 3 will not work in version 3 and above. Please recompile to fit this new format
+NOTE: jcc files from versions 3-7 will not work on version 8 and above. Please recompile to fit new format
 
 
     usage: jcc <file> [options]
